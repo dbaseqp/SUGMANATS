@@ -1,5 +1,5 @@
 # SUGMANATS
-Some Unhinged Guys Make Another NMAP Aggregating Team Server
+Some Unhinged Guy Makes Another NMAP Aggregating Team Server
 
 Here is an example config file
 ```toml
