@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 <head>
     <!-- Metadata and resources
     –––––––––––––––––––––––––––––––––––––––––––––––––– -->
     <title>SUGMANATS{{ if .user }} • {{ .operation }} - {{ .title }}{{ end }}</title>
     <link rel="stylesheet" href="/assets/bootstrap5/css/bootstrap.min.css">
     <link rel="stylesheet" href="/assets/style.css">
+    <link rel="stylesheet" href="/assets/fontawesome/css/all.min.css">
     <link rel="icon" type="image/ico" href="/assets/favicon.ico"/>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,6 +14,7 @@
 </head>
 
 <body>
+  {{ if .user.IsValid }}
     <nav class="navbar navbar-expand-sm bg-body-tertiary">
         <div class="container-fluid">
           <a class="navbar-brand">SUGMANATS</a>
@@ -20,29 +22,44 @@
             <span class="navbar-toggler-icon"></span>
           </button>
           <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <ul class="navbar-nav me-auto mb-lg-0">
               <li class="nav-item">
-                <a class="nav-link active" aria-current="page" href="/dashboard">Dashboard</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">Credentials</a>
+                <a class="nav-link {{if eq .title "Dashboard"}}active{{end}}" aria-current="page" href="/dashboard"><i class="fa-fw fa-solid fa-weight-scale"></i></i> Dashboard</a>
               </li>
               <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  Dropdown
+                <a class="nav-link dropdown-toggle {{if or (eq .title "Boxes") (eq .title "Credentials")}}active{{end}}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="fa-fw fa-solid fa-warehouse"></i> Inventory
                 </a>
                 <ul class="dropdown-menu">
-                  <li><a class="dropdown-item" href="#">Action</a></li>
-                  <li><a class="dropdown-item" href="#">Another action</a></li>
+                  <li><a class="dropdown-item" href="/boxes"><i class="fa-fw fa-solid fa-boxes-stacked"></i> Boxes</a></li>
+                  <li><a class="dropdown-item" href="#"><i class="fa-fw fa-regular fa-id-card"></i> Credentials</a></li>
+                  <li><a class="dropdown-item" href="#"> Something else here</a></li>
+                </ul>
+              </li>
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle {{if or (eq .title "Team Tasks") (eq .title "My Tasks")}}active{{end}}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="fa-fw fa-solid fa-clipboard-list"></i> Tasks
+                </a>
+                <ul class="dropdown-menu">
+                  <li><a class="dropdown-item" href="#"><i class="fa-fw fa-solid fa-people-group"></i> Team Tasks</a></li>
+                  <li><a class="dropdown-item" href="#"><i class="fa-fw fa-solid fa-user-pen"></i> My Tasks</a></li>
+                </ul>
+              </li>
+            </ul> 
+            <ul class="navbar-nav ml-auto mb-lg-0">
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle {{if or (eq .title "Settings") (eq .title "About")}}active{{end}}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="fa-solid fa-user"></i> {{ .user.Name }}
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li><a class="dropdown-item" href="#"><i class="fa-fw fa-solid fa-user-gear"></i> Settings</a></li>
+                  <li><a class="dropdown-item" href="/about"><i class="fa-fw fa-solid fa-circle-info"></i> About</a></li>
                   <li><hr class="dropdown-divider"></li>
-                  <li><a class="dropdown-item" href="#">Something else here</a></li>
+                  <li><a class="dropdown-item" href="/logout"><i class="fa-fw fa-solid fa-door-open"></i> Logout</a></li>
                 </ul>
               </li>
             </ul>
-            <form class="d-flex" role="search">
-              <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-              <button class="btn btn-outline-success" type="submit">Search</button>
-            </form>
           </div>
         </div>
       </nav>
+  {{ end }}

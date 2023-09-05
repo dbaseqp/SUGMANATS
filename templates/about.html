@@ -1,0 +1,27 @@
+{{ template "header.html" . }}
+
+<div class="mt-4 container">
+    <div class="row g-4">
+        <div>
+            <h1>About SUGMANATS</h1>
+            <ul class="list-group">
+                <li class="list-group-item">Version: SUGMANATS v1.0.0</li>
+                <li class="list-group-item">Created By: baseq</li>
+              </ul>
+        </div>
+    </div>
+    <div class="row mt-4">
+        <h1>About Operation: {{ .operation }}</h1>
+        <div class="card bg-light-subtle mt-3">
+            <div class="card-body">
+                <pre>
+                    {{ .config }}
+                </pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ template "error.html" .error }}
+
+{{ template "footer.html" }}

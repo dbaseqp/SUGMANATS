@@ -1,0 +1,193 @@
+{{ template "header.html" . }}
+
+<div class="mt-4 container">
+    {{ range $box := .boxes }}
+    <div class="row g-4">
+        <div class="accordion" id="accordionExample">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                    Accordion Item #1
+                    </button>
+                </h2>
+                <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
+                    <div class="accordion-body">
+                    <strong>This is the first item's accordion body.</strong> It is shown by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{ end }}
+    <div class="row">
+        <table class="table w-auto mb-4" id="filter-radios">
+            <tr>
+                <td class="border-bottom-0">
+                    <input type="radio" class="btn-check" name="all-filter" id="all-boxes" value="all" autocomplete="off" checked>
+                    <label class="btn btn-primary rounded-pill" for="all-boxes">All Boxes</label>
+                </td>
+                <td class="border-bottom-0 border-start">
+                    <input type="radio" class="btn-check" name="claim-filter" id="claimed" value="claimed" autocomplete="off">
+                    <label class="btn btn-primary rounded-pill" for="claimed">All Claimed Boxes</label>
+
+                    <input type="radio" class="btn-check" name="claim-filter" id="yours" value="yours" autocomplete="off">
+                    <label class="btn btn-primary rounded-pill" for="yours">My Claimed Boxes</label>
+
+                    <input type="radio" class="btn-check" name="claim-filter" id="unclaimed" value="unclaimed" autocomplete="off">
+                    <label class="btn btn-primary rounded-pill" for="unclaimed">Unclaimed Boxes</label>
+                </td>
+                <td class="border-bottom-0 border-start">
+                    <input type="radio" class="btn-check" name="pwn-filter" id="unpwned" value="unpwned" autocomplete="off">
+                    <label class="btn btn-primary rounded-pill" for="unpwned">Unpwned Boxes</label>
+                    
+                    <input type="radio" class="btn-check" name="pwn-filter" id="pwned" value="pwned" autocomplete="off">
+                    <label class="btn btn-primary rounded-pill" for="pwned">Pwned Boxes</label>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="row g-4">
+        <div>
+            <h1 id="result-header">Showing 4/4 boxes</h1>
+        </div>
+        <div class="accordion" id="box-1" data-claim="gabe">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-1" aria-expanded="false" aria-controls="collapse-1">
+                    192.168.1.2 | somethingcrazy.whomakesthisdomain.heeheehawhaw
+                    </button>
+                </h2>
+                <div id="collapse-1" class="accordion-collapse collapse" data-bs-parent="#box-1">
+                    <div class="accordion-body bg-light-subtle">
+                        <div class="container">
+                            <div class="row">
+                                <div class="col">
+                                    <table class="table border border-light-subtle">
+                                        <tr>
+                                            <th>IP</th>
+                                            <td>192.168.1.2</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Hostname</th>
+                                            <td>somethingcrazy.whomakesthisdomain.heeheehawhaw</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Ports</th>
+                                            <td>
+                                                <div>
+                                                    22/tcp
+                                                </div>
+                                                <div>
+                                                    32/tcp
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="w-100 m-0 d-xl-none d-block"></div>
+                                <div class="col">
+                                    <form class="bg-dark border border-light-subtle p-3">
+                                        <h3>Notes</h3>
+                                        <div class="mb-3">
+                                            <label for="box-1-notes" class="form-label">Enter notes here</label>
+                                            <textarea class="form-control" id="box-1-notes" rows="10">Example content</textarea>
+                                        </div>
+                                        <button type="submit" class="bottom-btn bg-primary">Save Notes</button>
+                                    </form>                                    
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="accordion" id="box-2">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-2" aria-expanded="false" aria-controls="collapse-2">
+                    192.168.1.3 | morepower.whomakesthisdomain.heeheehawhaw
+                    </button>
+                </h2>
+                <div id="collapse-2" class="accordion-collapse collapse" data-bs-parent="#box-2">
+                    <div class="accordion-body">
+                    <strong>This is the first item's accordion body.</strong> It is shown by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const allRadio      = document.getElementById('all-boxes');
+    const claimRadio    = document.querySelectorAll('input[name="claim-filter"]');
+    const pwnRadio      = document.querySelectorAll('input[name="pwn-filter"]');
+
+    claimRadio.forEach(radio => {
+        radio.addEventListener('change', () => {
+            if (radio.checked) {
+                allRadio.checked = false;
+            }
+        })
+    });
+
+    pwnRadio.forEach(radio => {
+        radio.addEventListener('change', () => {
+            if (radio.checked) {
+                allRadio.checked = false;
+            }
+        })
+    });
+
+    allRadio.addEventListener('click', () => {
+        claimRadio.forEach(radio => {
+            radio.checked = false;
+        });
+        pwnRadio.forEach(radio => {
+            radio.checked = false;
+        });
+    });
+
+    const allClaimedRadio = document.getElementById('claimed');
+    const yourClaimedRadio = document.getElementById('yours');
+    const unClaimedRadio = document.getElementById('unclaimed');
+    const pwnedRadio = document.getElementById('pwned');
+    const unpwnedRadio = document.getElementById('unpwned');
+
+    const radioBar  = document.getElementById('filter-radios');
+    const boxes     = document.querySelectorAll('.accordion');
+
+    radioBar.addEventListener('click', (event) => {
+        if(event.target && event.target.matches("input[type='radio']")) {
+            let boxcount = 0;
+            boxes.forEach((box) => {
+                let claimBool = false;
+                let pwnBool = false;
+                
+                if ((allClaimedRadio.checked && box.getAttribute('data-claim') != null) || 
+                    (yourClaimedRadio.checked && box.getAttribute('data-claim') == '{{ .user.Name }}') ||
+                    (unClaimedRadio.checked && box.getAttribute('data-claim') == null) ||
+                    (!allClaimedRadio.checked && !yourClaimedRadio.checked && !unClaimedRadio.checked)) {
+                    claimBool = true;
+                } 
+                if ((pwnedRadio.checked && box.getAttribute('data-pwned') != null) ||
+                    (unpwnedRadio.checked && box.getAttribute('data-pwned') == null) ||
+                    (!pwnedRadio.checked && !unpwnedRadio.checked)) {
+                    pwnBool = true;
+                }
+
+                if((claimBool && pwnBool) || event.target.matches('#all-boxes')) {
+                    box.style.display = "block";
+                    boxcount++;
+                } else {
+                    box.style.display = "none";
+                }
+            })
+            document.getElementById('result-header').textContent = 'Showing ' + boxcount + '/4 boxes'
+        }
+    })
+</script>
+
+{{ template "error.html" .error }}
+
+{{ template "footer.html" }}
