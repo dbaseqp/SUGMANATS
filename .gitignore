@@ -21,6 +21,8 @@
 go.work
 
 # Other
+sugmanats
 *.db
 *.swp
 *.conf
+*.xml
