@@ -72,6 +72,16 @@
     --bs-accordion-active-bg: #05213E;
 }
 
+.offcanvas {
+    --bs-offcanvas-width: 800px;
+}
+
+#box-bar {
+    --bs-list-group-active-bg: var(--bs-gray-400);
+    --bs-list-group-active-border-color: var(--bs-gray-400);
+    --bs-list-group-active-color: var(--bs-gray-900);
+}
+
 body {
     min-height: 100vh;
 }

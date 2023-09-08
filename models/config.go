@@ -42,6 +42,9 @@ func CheckConfig(conf *Config) error {
 	if conf.Operation == "" {
 		return errors.New("operation must be defined!")
 	}
+	if len(conf.Admin) == 0 {
+		return errors.New("at least one user must be defined!")
+	}
 	if conf.Port == 0 {
 		conf.Port = 80
 	}

@@ -1,0 +1,163 @@
+{{ template "header.html" . }}
+
+{{ $ports := .ports }}
+{{ $boxes := .boxes }}
+{{ $users := .users }}
+{{ $config := .config }}
+
+<div class="mt-4 container">
+    <div class="row">
+        <div class="hstack gap-2 w-auto mb-4" id="filter-radios">
+            <input type="radio" class="btn-check" name="all-filter" id="all-boxes" value="all" autocomplete="off" checked>
+            <label class="btn btn-primary rounded-pill" for="all-boxes">All Boxes</label>
+            <div class="vr"></div>
+            
+            <input type="radio" class="btn-check" name="claim-filter" id="claimed" value="claimed" autocomplete="off">
+            <label class="btn btn-primary rounded-pill" for="claimed">All Claimed Boxes</label>
+
+            <input type="radio" class="btn-check" name="claim-filter" id="yours" value="yours" autocomplete="off">
+            <label class="btn btn-primary rounded-pill" for="yours">My Claimed Boxes</label>
+
+            <input type="radio" class="btn-check" name="claim-filter" id="unclaimed" value="unclaimed" autocomplete="off">
+            <label class="btn btn-primary rounded-pill" for="unclaimed">Unclaimed Boxes</label>
+            <div class="vr"></div>
+
+
+            <input type="radio" class="btn-check" name="pwn-filter" id="unpwned" value="unpwned" autocomplete="off">
+            <label class="btn btn-primary rounded-pill" for="unpwned">Unpwned Boxes</label>
+            
+            <input type="radio" class="btn-check" name="pwn-filter" id="pwned" value="pwned" autocomplete="off">
+            <label class="btn btn-primary rounded-pill" for="pwned">Pwned Boxes</label>
+        </div>
+    </div>
+    <div class="row g-4">
+        <div>
+            <h1 id="result-header">Showing {{ len .boxes }}/{{ len .boxes }} boxes</h1>
+        </div>
+        {{ range $box := $boxes }}
+        <div class="accordion" id="box-{{ $box.ID }}" data-claim="{{ if ne $box.ClaimerID 0}}{{ $claimer := index $users $box.ClaimerID }}{{ $claimer.Name }}{{ else }}unclaimed{{ end }}" data-pwned="{{ or (gt $box.Usershells 0 ) (gt $box.Rootshells 0 ) }}">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ $box.ID }}" aria-expanded="false" aria-controls="collapse-{{ $box.ID }}">
+                    <i class="fa-fw fa-solid {{ if or (gt $box.Usershells 0 ) (gt $box.Rootshells 0 ) }}fa-skull{{ else }}fa-shield{{ end }}"></i> <hr class="vr mx-2 my-0"> {{ $box.IP }}{{ if $box.Hostname }} <hr class="vr mx-2 my-0"> {{ $box.Hostname}}{{ end }} <hr class="vr mx-2 my-0"> Claim: {{ if ne $box.ClaimerID 0 }}{{ $claimer := index $users $box.ClaimerID }}{{ $claimer.Name }}{{ else }}Unclaimed{{ end }}
+                    </button>
+                </h2>
+                <div id="collapse-{{ $box.ID }}" class="accordion-collapse collapse" data-bs-parent="#box-{{ $box.ID }}">
+                    <div class="accordion-body bg-light-subtle">
+                        <div class="container">
+                            <div class="row">
+                                <div class="col">
+                                    <table class="table border border-light-subtle">
+                                        <tr>
+                                            <th>IP</th>
+                                            <td>{{ $box.IP }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Hostname</th>
+                                            <td>{{ $box.Hostname }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Ports</th>
+                                            <td>
+                                                {{ $boxPorts := index $ports $box.ID }}
+                                                {{ range $port := $boxPorts }}
+                                                <div>
+                                                    {{ $port.Port }}/{{ $port.Protocol }}
+                                                </div>
+                                                {{ end }}
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="w-100 m-0 d-xl-none d-block"></div>
+                                <div class="col">
+                                    <div class="bg-dark border border-light-subtle p-3">
+                                        <h3>Notes</h3>
+                                        <div class="mb-3">
+                                            <textarea class="form-control" id="box-1-notes" disabled>Example content</textarea>
+                                        </div>
+                                    </div>                                    
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{ end }}
+    </div>
+</div>
+
+<script>
+    const allRadio      = document.getElementById('all-boxes');
+    const claimRadio    = document.querySelectorAll('input[name="claim-filter"]');
+    const pwnRadio      = document.querySelectorAll('input[name="pwn-filter"]');
+
+    claimRadio.forEach(radio => {
+        radio.addEventListener('change', () => {
+            if (radio.checked) {
+                allRadio.checked = false;
+            }
+        })
+    });
+
+    pwnRadio.forEach(radio => {
+        radio.addEventListener('change', () => {
+            if (radio.checked) {
+                allRadio.checked = false;
+            }
+        })
+    });
+
+    allRadio.addEventListener('click', () => {
+        claimRadio.forEach(radio => {
+            radio.checked = false;
+        });
+        pwnRadio.forEach(radio => {
+            radio.checked = false;
+        });
+    });
+
+    const allClaimedRadio = document.getElementById('claimed');
+    const yourClaimedRadio = document.getElementById('yours');
+    const unClaimedRadio = document.getElementById('unclaimed');
+    const pwnedRadio = document.getElementById('pwned');
+    const unpwnedRadio = document.getElementById('unpwned');
+
+    const radioBar  = document.getElementById('filter-radios');
+    const boxes     = document.querySelectorAll('.accordion');
+
+    radioBar.addEventListener('click', (event) => {
+        if(event.target && event.target.matches("input[type='radio']")) {
+            let boxcount = 0;
+            boxes.forEach((box) => {
+                let claimBool = false;
+                let pwnBool = false;
+                
+                if ((allClaimedRadio.checked && box.getAttribute('data-claim') != "unclaimed") || 
+                    (yourClaimedRadio.checked && box.getAttribute('data-claim') == '{{ .user.Name }}') ||
+                    (unClaimedRadio.checked && box.getAttribute('data-claim') == null) ||
+                    (!allClaimedRadio.checked && !yourClaimedRadio.checked && !unClaimedRadio.checked)) {
+                    claimBool = true;
+                } 
+                if ((pwnedRadio.checked && box.getAttribute('data-pwned') == "true") ||
+                    (unpwnedRadio.checked && box.getAttribute('data-pwned') == "false") ||
+                    (!pwnedRadio.checked && !unpwnedRadio.checked)) {
+                    pwnBool = true;
+                }
+
+                if((claimBool && pwnBool) || event.target.matches('#all-boxes')) {
+                    box.style.display = "block";
+                    boxcount++;
+                } else {
+                    box.style.display = "none";
+                }
+            })
+            document.getElementById('result-header').textContent = 'Showing ' + boxcount + '/{{ len .boxes }} boxes'
+        }
+    })
+</script>
+
+{{ template "error.html" .error }}
+
+{{ template "footer.html" }}

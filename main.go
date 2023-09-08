@@ -17,8 +17,9 @@ import (
 )
 
 var (
-	tomlConf   = &models.Config{}
-	configPath = "config.conf"
+	tomlConf   	= &models.Config{}
+	configPath 	= "config.conf"
+	db			= &gorm.DB{}
 )
 
 func main() {
@@ -30,11 +31,13 @@ func main() {
 	}
 
 	// setup database
-	db, err := gorm.Open(sqlite.Open(tomlConf.DBPath), &gorm.Config{})
+	db, err = gorm.Open(sqlite.Open(tomlConf.DBPath), &gorm.Config{})
 	if err != nil {
 		log.Fatalln("Failed to connect database!")
 	}
-	db.AutoMigrate(&models.Box{})
+	db.AutoMigrate(&models.Box{}, &models.Port{}, &models.UserData{})
+
+	dbAddUsers(tomlConf.Admin)
 
 	// setup router
 	router := gin.Default()

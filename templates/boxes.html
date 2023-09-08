@@ -1,122 +1,252 @@
 {{ template "header.html" . }}
 
+{{ $ports := .ports }}
+{{ $boxes := .boxes }}
+{{ $users := .users }}
+{{ $config := .config }}
+
+<button style="z-index:0;top:3rem;" class="float-start sticky-top btn btn-lg btn-outline-primary mt-4" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasBoxList" aria-controls="offcanvasBoxList" title="Open menu"><i class="fa-solid fa-square-poll-horizontal"></i></button>
+
 <div class="mt-4 container">
-    {{ range $box := .boxes }}
-    <div class="row g-4">
-        <div class="accordion" id="accordionExample">
-            <div class="accordion-item">
-                <h2 class="accordion-header">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                    Accordion Item #1
-                    </button>
-                </h2>
-                <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
-                    <div class="accordion-body">
-                    <strong>This is the first item's accordion body.</strong> It is shown by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow.
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {{ end }}
     <div class="row">
-        <table class="table w-auto mb-4" id="filter-radios">
-            <tr>
-                <td class="border-bottom-0">
-                    <input type="radio" class="btn-check" name="all-filter" id="all-boxes" value="all" autocomplete="off" checked>
-                    <label class="btn btn-primary rounded-pill" for="all-boxes">All Boxes</label>
-                </td>
-                <td class="border-bottom-0 border-start">
-                    <input type="radio" class="btn-check" name="claim-filter" id="claimed" value="claimed" autocomplete="off">
-                    <label class="btn btn-primary rounded-pill" for="claimed">All Claimed Boxes</label>
-
-                    <input type="radio" class="btn-check" name="claim-filter" id="yours" value="yours" autocomplete="off">
-                    <label class="btn btn-primary rounded-pill" for="yours">My Claimed Boxes</label>
-
-                    <input type="radio" class="btn-check" name="claim-filter" id="unclaimed" value="unclaimed" autocomplete="off">
-                    <label class="btn btn-primary rounded-pill" for="unclaimed">Unclaimed Boxes</label>
-                </td>
-                <td class="border-bottom-0 border-start">
-                    <input type="radio" class="btn-check" name="pwn-filter" id="unpwned" value="unpwned" autocomplete="off">
-                    <label class="btn btn-primary rounded-pill" for="unpwned">Unpwned Boxes</label>
-                    
-                    <input type="radio" class="btn-check" name="pwn-filter" id="pwned" value="pwned" autocomplete="off">
-                    <label class="btn btn-primary rounded-pill" for="pwned">Pwned Boxes</label>
-                </td>
-            </tr>
-        </table>
-    </div>
-    <div class="row g-4">
-        <div>
-            <h1 id="result-header">Showing 4/4 boxes</h1>
+        <div class="hstack gap-2 w-auto mb-4" id="box-tabs">
+            
         </div>
-        <div class="accordion" id="box-1" data-claim="gabe">
-            <div class="accordion-item">
-                <h2 class="accordion-header">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-1" aria-expanded="false" aria-controls="collapse-1">
-                    192.168.1.2 | somethingcrazy.whomakesthisdomain.heeheehawhaw
-                    </button>
-                </h2>
-                <div id="collapse-1" class="accordion-collapse collapse" data-bs-parent="#box-1">
-                    <div class="accordion-body bg-light-subtle">
-                        <div class="container">
-                            <div class="row">
-                                <div class="col">
-                                    <table class="table border border-light-subtle">
-                                        <tr>
-                                            <th>IP</th>
-                                            <td>192.168.1.2</td>
-                                        </tr>
-                                        <tr>
-                                            <th>Hostname</th>
-                                            <td>somethingcrazy.whomakesthisdomain.heeheehawhaw</td>
-                                        </tr>
-                                        <tr>
-                                            <th>Ports</th>
-                                            <td>
-                                                <div>
-                                                    22/tcp
-                                                </div>
-                                                <div>
-                                                    32/tcp
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </div>
-                                <div class="w-100 m-0 d-xl-none d-block"></div>
-                                <div class="col">
-                                    <form class="bg-dark border border-light-subtle p-3">
-                                        <h3>Notes</h3>
-                                        <div class="mb-3">
-                                            <label for="box-1-notes" class="form-label">Enter notes here</label>
-                                            <textarea class="form-control" id="box-1-notes" rows="10">Example content</textarea>
+    </div>
+    <div class="row">
+        <div class="tab-content" id="v-pills-tabContent">
+            <div class="tab-pane fade show active" id="v-pills-default" role="tabpanel" aria-labelledby="v-pills-default-tab" tabindex="0">
+                No box selected.
+            </div>
+            <div id="toast-container" class="toast-container position-fixed bottom-0 end-0 p-3">
+            </div>
+            {{ range $box := $boxes }}
+            {{ $claimUser := index $users $box.ClaimerID }}
+            <div class="tab-pane fade" id="v-pills-{{ $box.ID }}" role="tabpanel" aria-labelledby="v-pills-{{ $box.ID }}-tab" tabindex="0">
+                <div class="bg-light-subtle border border-light-subtle rounded-2 p-4 h-100">
+                    <h1>{{ $box.IP }}{{ if $box.Hostname }} <hr class="vr mx-2 my-0"> {{ $box.Hostname}}{{ end }}</h1>
+                    <div class="row">
+                        <div class="col-8">
+                            <table class="table border border-light-subtle">
+                                <tr>
+                                    <th>IP</th>
+                                    <td>{{ $box.IP }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Hostname</th>
+                                    <td>{{ $box.Hostname }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Ports</th>
+                                    <td>
+                                        {{ $boxPorts := index $ports $box.ID }}
+                                        {{ range $port := $boxPorts }}
+                                        <div>
+                                            {{ $port.Port }}/{{ $port.Protocol }}
                                         </div>
-                                        <button type="submit" class="bottom-btn bg-primary">Save Notes</button>
-                                    </form>                                    
+                                        {{ end }}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col">
+                            <div class="d-flex flex-column gap-4">
+                                <div>
+                                    <div class="row gx-0">
+                                        <ul id="box-details-{{ $box.ID }}" class="list-group list-group-flush border">
+                                            <li class="list-group-item fs-2 d-flex flex-row align-items-center">
+                                                <i class="fa-fw fa-regular fa-user"></i>
+                                                <div class="ms-4">
+                                                    <div class="fs-6">User Shells</div>
+                                                    <div id="box-details-usershells-{{ $box.ID }}">{{ $box.Usershells }}</div>
+                                                </div>
+                                            </li>
+                                            <li class="list-group-item fs-2 d-flex flex-row align-items-center">
+                                                <i class="fa-fw fa-solid fa-skull-crossbones"></i>
+                                                <div class="ms-4">
+                                                    <div class="fs-6">Root Shells</div>
+                                                    <div id="box-details-rootshells-{{ $box.ID }}">{{ $box.Rootshells }}</div>
+                                                </div>
+                                            </li>
+                                            <li class="list-group-item fs-2 d-flex flex-row align-items-center">
+                                                <i class="fa-fw fa-solid fa-street-view"></i>
+                                                <div class="ms-4">
+                                                    <div class="fs-6">Claim</div>
+                                                    <div id="box-details-claim-{{ $box.ID }}">{{ if ne $box.ClaimerID 0 }}{{ $claimUser.Name }}{{ else }}Unclaimed{{ end }}</div>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                        <a type="button" class="btn btn-link w-auto link-underline link-underline-opacity-0 link-underline-opacity-100-hover" data-bs-toggle="modal" data-bs-target="#editbox-modal-{{ $box.ID }}">
+                                            Edit...
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div class="modal fade" id="editbox-modal-{{ $box.ID }}" tabindex="-1" aria-labelledby="editbox-modal-{{ $box.ID }}Label" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h1 class="modal-title fs-5" id="editbox-modal-{{ $box.ID }}Label">Edit Box Details</h1>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <form onsubmit="return editBoxDetails(event, '{{ $box.ID }}')" id="editbox-form-{{ $box.ID }}">
+                                                    <div class="row">
+                                                        <div class="col input-group mb-3">
+                                                            <span class="input-group-text" id="usershell-addon-{{ $box.ID }}">User Shells</span>
+                                                            <input value="{{ $box.Usershells }}" name="usershells" type="numeric" class="form-control" placeholder="0" aria-label="User shells" aria-describedby="usershell-addon-{{ $box.ID }}">
+                                                        </div>
+                                                        <div class="col input-group mb-3">
+                                                            <span class="input-group-text" id="rootshell-addon-{{ $box.ID }}">Root Shells</span>
+                                                            <input value="{{ $box.Rootshells }}" name="rootshells" type="numeric" class="form-control" placeholder="0" aria-label="Root shells" aria-describedby="rootshell-addon-{{ $box.ID }}">
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col">
+                                                            <div class="col input-group mb-3">
+                                                                <span class="input-group-text" id="claim-addon-{{ $box.ID }}">Claim</span>
+                                                                <select name="claim" class="form-select" aria-label="Assign a claim">
+                                                                    <option value="0" {{ if eq $box.ClaimerID 0}}selected{{ end }}>Unclaimed</option>
+                                                                    {{ range $user := $users }}
+                                                                    <option value="{{ $user.ID }}" {{ if and (ne $box.ClaimerID 0) (eq $user.ID $box.ClaimerID) }}selected{{ end }}>{{ $user.Name}}</option>
+                                                                    {{ end }}
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                <button type="submit" class="btn btn-primary" form="editbox-form-{{ $box.ID }}">Save changes</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+<!--                                 
+                                <div class="accordion" id="accordionClaim-{{ $box.ID }}">
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseClaim-{{ $box.ID }}" aria-expanded="true" aria-controls="collapseClaim-{{ $box.ID }}">
+                                            Claim
+                                            </button>
+                                        </h2>
+                                        <div id="collapseClaim-{{ $box.ID }}" class="accordion-collapse collapse" data-bs-parent="#accordionClaim-{{ $box.ID }}">
+                                            <div class="accordion-body">
+                                                <form>
+                                                    <div class="mb-3">
+                                                        
+                                                    </div>
+                                                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                                        <button type="submit" class="btn btn-primary">
+                                                            Assign
+                                                        </button> 
+                                                    </div>                                       
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div> -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="accordion" id="accordionNote-{{ $box.ID }}">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNote-{{ $box.ID }}" aria-expanded="true" aria-controls="collapseNote-{{ $box.ID }}">
+                                    Notes
+                                    </button>
+                                </h2>
+                                <div id="collapseNote-{{ $box.ID }}" class="accordion-collapse collapse" data-bs-parent="#accordionNote-{{ $box.ID }}">
+                                    <div class="accordion-body">
+                                        <form>
+                                            <textarea class="form-control"></textarea>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="accordion" id="box-2">
-            <div class="accordion-item">
-                <h2 class="accordion-header">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-2" aria-expanded="false" aria-controls="collapse-2">
-                    192.168.1.3 | morepower.whomakesthisdomain.heeheehawhaw
-                    </button>
-                </h2>
-                <div id="collapse-2" class="accordion-collapse collapse" data-bs-parent="#box-2">
-                    <div class="accordion-body">
-                    <strong>This is the first item's accordion body.</strong> It is shown by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow.
-                    </div>
-                </div>
-            </div>
+            {{ end }}
         </div>
     </div>
+</div> 
+<div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasBoxList" aria-labelledby="offcanvasBoxListLabel">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="offcanvasBoxListLabel">Actions</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    <div class="hstack gap-2 w-auto mb-4">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadNmapModal">
+            Upload NMAP XML
+        </button>
+        <div class="vr"></div>
+        
+    </div>
+    <h5 class="mb-4">Filters</h5>
+    <div class="hstack gap-2 w-auto mb-4" id="filter-radios">
+        <input type="radio" class="btn-check" name="all-filter" id="all-boxes" value="all" autocomplete="off" checked>
+        <label class="btn btn-primary rounded-pill" for="all-boxes">All Boxes</label>
+        <div class="vr"></div>
+        
+        <input type="radio" class="btn-check" name="claim-filter" id="claimed" value="claimed" autocomplete="off">
+        <label class="btn btn-primary rounded-pill" for="claimed">All Claimed Boxes</label>
+
+        <input type="radio" class="btn-check" name="claim-filter" id="yours" value="yours" autocomplete="off">
+        <label class="btn btn-primary rounded-pill" for="yours">My Claimed Boxes</label>
+
+        <input type="radio" class="btn-check" name="claim-filter" id="unclaimed" value="unclaimed" autocomplete="off">
+        <label class="btn btn-primary rounded-pill" for="unclaimed">Unclaimed Boxes</label>
+        <div class="vr"></div>
+
+
+        <input type="radio" class="btn-check" name="pwn-filter" id="unpwned" value="unpwned" autocomplete="off">
+        <label class="btn btn-primary rounded-pill" for="unpwned">Unpwned Boxes</label>
+        
+        <input type="radio" class="btn-check" name="pwn-filter" id="pwned" value="pwned" autocomplete="off">
+        <label class="btn btn-primary rounded-pill" for="pwned">Pwned Boxes</label>
+    </div>
+    {{ if ne (len $boxes) 0 }}
+    <h5 class="mb-4">Boxes</h5>
+    <div class="list-group list-group-flush" id="box-bar">
+        {{ range $box := $boxes }}
+        <button class="list-group-item list-group-item-action" id="v-pills-{{ $box.ID }}-tab" data-claim="{{ if ne $box.ClaimerID 0}}{{ $claimer := index $users $box.ClaimerID }}{{ $claimer.Name }}{{ else }}unclaimed{{ end }}" data-pwned="{{ or (gt $box.Usershells 0 ) (gt $box.Rootshells 0 ) }}" data-bs-toggle="pill" data-bs-target="#v-pills-{{ $box.ID }}" type="button" role="tab" aria-controls="v-pills-{{ $box.ID }}" aria-selected="true">
+            {{ $box.IP }}{{ if $box.Hostname }} <hr class="vr mx-2 my-0"> {{ $box.Hostname}}{{ end }}
+        </button>
+        {{ end }}
+    </div>
+    {{ else }}
+    <p>Nothing to show right now. Upload NMAP results to view.</p>
+    {{ end }}
+  </div>
 </div>
+
+<div class="modal fade" id="uploadNmapModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="uploadNmapModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="uploadNmapModalLabel">Upload NMAP XML</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <form id="box-upload-form" method="POST" enctype="multipart/form-data" action="/boxes/upload">
+                <div class="mb-3">
+                    <label for="formFileMultiple" class="form-label">NMAP XML File</label>
+                    <input type="file" class="form-control" name="files" id="formFileMultiple" multiple>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary" form="box-upload-form">Upload</button>
+        </div>
+      </div>
+    </div>
+</div>  
 
 <script>
     const allRadio      = document.getElementById('all-boxes');
@@ -155,27 +285,28 @@
     const unpwnedRadio = document.getElementById('unpwned');
 
     const radioBar  = document.getElementById('filter-radios');
-    const boxes     = document.querySelectorAll('.accordion');
+    const boxes     = document.querySelectorAll('#box-bar .list-group-item-action');
 
     radioBar.addEventListener('click', (event) => {
         if(event.target && event.target.matches("input[type='radio']")) {
             let boxcount = 0;
+
             boxes.forEach((box) => {
+
                 let claimBool = false;
                 let pwnBool = false;
                 
-                if ((allClaimedRadio.checked && box.getAttribute('data-claim') != null) || 
+                if ((allClaimedRadio.checked && box.getAttribute('data-claim') != "unclaimed") || 
                     (yourClaimedRadio.checked && box.getAttribute('data-claim') == '{{ .user.Name }}') ||
                     (unClaimedRadio.checked && box.getAttribute('data-claim') == null) ||
                     (!allClaimedRadio.checked && !yourClaimedRadio.checked && !unClaimedRadio.checked)) {
                     claimBool = true;
                 } 
-                if ((pwnedRadio.checked && box.getAttribute('data-pwned') != null) ||
-                    (unpwnedRadio.checked && box.getAttribute('data-pwned') == null) ||
+                if ((pwnedRadio.checked && box.getAttribute('data-pwned') == "true") ||
+                    (unpwnedRadio.checked && box.getAttribute('data-pwned') == "false") ||
                     (!pwnedRadio.checked && !unpwnedRadio.checked)) {
                     pwnBool = true;
                 }
-
                 if((claimBool && pwnBool) || event.target.matches('#all-boxes')) {
                     box.style.display = "block";
                     boxcount++;
@@ -183,9 +314,55 @@
                     box.style.display = "none";
                 }
             })
-            document.getElementById('result-header').textContent = 'Showing ' + boxcount + '/4 boxes'
+            // document.getElementById('result-header').textContent = 'Showing ' + boxcount + '/{{ len .boxes }} boxes'
         }
     })
+
+    const boxBar  = document.getElementById('box-bar');
+    const defaultPane  = document.getElementById('v-pills-default');
+
+
+    boxBar.addEventListener('click', (event) => {
+        if(event.target && event.target.matches(".list-group-item-action")) {
+            defaultPane.style.display = "none";
+        }
+    })
+
+    function editBoxDetails(e, id) {
+        e.preventDefault();
+        const form = document.forms["editbox-form-"+id]
+        data = {
+            usershells: form.usershells.value,
+            rootshells: form.rootshells.value,
+            claim: form.claim.value
+        }
+        var form_data = new FormData();
+        for ( var key in data ) {
+            form_data.append(key, data[key]);
+        }
+
+        fetch("/boxes/edit/"+id, {
+            method: "POST",
+            body: form_data
+        })
+        .then(response => response.json())
+        .then(response => {
+            if (response.status == false) {
+                createToast(response.message, "bg-danger")
+            } else {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editbox-modal-'+id))
+
+                createToast(response.message, "bg-success")
+                modal.hide()
+                document.getElementById('box-details-usershells-'+id).textContent = form.usershells.value
+                document.getElementById('box-details-rootshells-'+id).textContent = form.rootshells.value
+                document.getElementById('box-details-claim-'+id).textContent = form.claim.options[form.claim.options.selectedIndex].textContent
+            }
+        })
+        .catch(error => {
+            createToast(error, "bg-danger")
+        })
+    }
 </script>
 
 {{ template "error.html" .error }}
