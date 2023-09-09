@@ -233,7 +233,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-            <form id="box-upload-form" method="POST" enctype="multipart/form-data" action="/boxes/upload">
+            <form id="box-upload-form" method="POST" enctype="multipart/form-data" onsubmit="uploadNmap(event)">
                 <div class="mb-3">
                     <label for="formFileMultiple" class="form-label">NMAP XML File</label>
                     <input type="file" class="form-control" name="files" id="formFileMultiple" multiple>
@@ -344,7 +344,7 @@
             modal.hide()
         }
 
-        postBox(e, formid, data, url, success_function)
+        postAjax(e, formid, data, url, success_function)
     }
 
     function editBoxDetails(e, id) {
@@ -368,7 +368,28 @@
             document.getElementById('box-details-claim-'+id).textContent = form.claim.options[form.claim.options.selectedIndex].textContent
         }
 
-        postBox(e, formid, data, url, success_function)
+        postAjax(e, formid, data, url, success_function)
+    }
+
+    function uploadNmap(e) {
+        formid = "box-upload-form";
+        url = "/boxes/upload";
+
+        const form = document.forms[formid]
+        
+        data = new FormData()
+        for (const file of form.files.files) {
+            data.append("files", file)
+        }
+
+        success_function = function (response){
+            const modal = bootstrap.Modal.getInstance(document.getElementById('uploadNmapModal'))
+
+            createToast(response.message, "bg-success")
+            modal.hide()
+        }
+
+        postAjax(e, formid, data, url, success_function)
     }
 </script>
 
