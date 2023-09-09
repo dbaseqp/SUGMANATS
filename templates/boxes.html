@@ -37,12 +37,31 @@
                                 <tr>
                                     <th>Ports</th>
                                     <td>
-                                        {{ $boxPorts := index $ports $box.ID }}
-                                        {{ range $port := $boxPorts }}
-                                        <div>
-                                            {{ $port.Port }}/{{ $port.Protocol }}
-                                        </div>
-                                        {{ end }}
+                                        <table class="table table-striped table-hover">
+                                            <tr>
+                                                <th>Port</th>
+                                                <th>Service</th>
+                                                <th>Version</th>
+                                                <th>Tunnel</th>
+                                            </tr>
+                                            {{ $boxPorts := index $ports $box.ID }}
+                                            {{ range $port := $boxPorts }}
+                                            <tr>
+                                                <td>
+                                                    {{ $port.Port }}/{{ $port.Protocol }}
+                                                </td>
+                                                <td>
+                                                    {{ $port.Service }}
+                                                </td>
+                                                <td>
+                                                    {{ $port.Version}}
+                                                </td>
+                                                <td>
+                                                    {{ $port.Tunnel }}
+                                                </td>
+                                            </tr>
+                                            {{ end }}
+                                        </table>
                                     </td>
                                 </tr>
                             </table>
