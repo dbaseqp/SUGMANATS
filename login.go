@@ -41,7 +41,7 @@ func login(c *gin.Context) {
 	session := sessions.Default(c)
 	username := c.PostForm("username")
 	password := c.PostForm("password")
-	var team models.UserData
+	var user models.UserData
 
 	// Validate form input
 	if strings.Trim(username, " ") == "" || strings.Trim(password, " ") == "" {
@@ -51,9 +51,10 @@ func login(c *gin.Context) {
 
 	err := errors.New("Invalid username or password.")
 
-	for _, t := range tomlConf.Admin {
+	for i, t := range tomlConf.Admin {
 		if username == t.Name && password == t.Pw {
-			team = t
+			user = t
+			user.ID = uint(i + 1)
 			err = nil
 		}
 	}
@@ -64,7 +65,7 @@ func login(c *gin.Context) {
 	}
 
 	// Save the username in the session
-	session.Set("id", team.ID)
+	session.Set("id", user.ID)
 	if err := session.Save(); err != nil {
 		c.HTML(http.StatusBadRequest, "login.html", pageData(c, "login", gin.H{"error": "Failed to save session."}))
 		return
@@ -75,11 +76,11 @@ func login(c *gin.Context) {
 func getUser(c *gin.Context) models.UserData {
 	userID := sessions.Default(c).Get("id")
 	if userID != nil {
-		for _, user := range tomlConf.Admin {
-			if user.ID == userID.(uint) {
-				return user
-			}
+		dbUser, err := dbGetUser(userID.(uint))
+		if err != nil {
+			return models.UserData{}
 		}
+		return dbUser
 	}
 	return models.UserData{}
 }

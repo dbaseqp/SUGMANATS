@@ -296,7 +296,7 @@
                 
                 if ((allClaimedRadio.checked && box.getAttribute('data-claim') != "unclaimed") || 
                     (yourClaimedRadio.checked && box.getAttribute('data-claim') == '{{ .user.Name }}') ||
-                    (unClaimedRadio.checked && box.getAttribute('data-claim') == null) ||
+                    (unClaimedRadio.checked && box.getAttribute('data-claim') == "unclaimed") ||
                     (!allClaimedRadio.checked && !yourClaimedRadio.checked && !unClaimedRadio.checked)) {
                     claimBool = true;
                 } 

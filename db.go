@@ -38,6 +38,18 @@ func dbGetPorts () (map[uint][]models.Port, error) {
 	return portMap, nil
 }
 
+func dbGetUser (id uint) (models.UserData, error) {
+	var user models.UserData
+	
+	result := db.First(&user, id)
+
+	if result.Error != nil {
+		return models.UserData{}, result.Error
+	}
+
+	return user, nil
+}
+
 func dbGetUsers () (map[uint]models.UserData, error) {
 	var users []models.UserData
 	
@@ -121,5 +133,15 @@ func dbUpdateBoxNote(box *models.Box) error {
 	if result.Error != nil {	
 		return result.Error
 	}
+	return nil
+}
+
+func dbEditSettings(user *models.UserData) error {
+	result := db.Model(user).Select("color").Updates(&user)
+
+	if result.Error != nil {
+		return result.Error
+	}
+
 	return nil
 }

@@ -7,7 +7,7 @@
                 <h1>Network PWNage</h1>
                 <div class="d-flex flex-column justify-content-between">
                     <div class="progress bg-dark my-3" role="progressbar" aria-valuenow="{{ .percent }}" aria-valuemin="0" aria-valuemax="100">
-                        <div class="progress-bar" style="width: {{ .percent }}%">{{ .percent }}%</div>
+                        <div class="progress-bar {{ if eq .percent 100.0 }}progress-bar-striped progress-bar-animated bg-success{{ end }}" style="width: {{ .percent }}%">{{ .percent }}%</div>
                     </div>
                     <p class="m-0">{{ .pwnCount }}/{{ len $boxes }} known boxes have at least 1 shell open.</p>
                 </div>
@@ -18,18 +18,24 @@
             <div class="row g-4 h-100 mt-md-0">
                 <div class="col mt-md-0">
                     <div class="bg-light-subtle border border-light-subtle rounded-2 p-4 h-100">
-                        <h1>Root Shells</h1>
-                        <div class="d-flex flex-column justify-content-between">
-                            <h3>{{ .rootshells }}</h3>
+                        <div class="fs-1 d-flex flex-row align-items-center">
+                            <i class="fa-fw fa-solid fa-skull-crossbones"></i>
+                            <div class="ms-4">
+                                <div class="fs-2">Total Root Shells</div>
+                                <div>{{ .rootshells }}</div>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="w-100 m-0 d-xl-none d-block"></div>
                 <div class="col mt-md-4 mt-xl-0">
                     <div class="bg-light-subtle border border-light-subtle rounded-2 p-4 h-100">
-                        <h1>User Shells</h1>
-                        <div class="d-flex flex-column justify-content-between">
-                            <h3>{{ .usershells }}</h3>
+                        <div class="fs-1 d-flex flex-row align-items-center">
+                            <i class="fa-fw fa-regular fa-user"></i>
+                            <div class="ms-4">
+                                <div class="fs-2">Total User Shells</div>
+                                <div>{{ .usershells }}</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -51,7 +57,66 @@
         </div>
     </div> -->
 </div>
+<script>
+    function star() {
+        var defaults = {
+            spread: 360,
+            ticks: 50,
+            gravity: 0,
+            decay: 0.94,
+            startVelocity: 30,
+            shapes: ['star'],
+            colors: ['FFE400', 'FFBD00', 'E89400', 'FFCA6C', 'FDFFB8']
+        };
 
+        function shoot() {
+            confetti({
+                ...defaults,
+                particleCount: 40,
+                scalar: 1.2,
+                shapes: ['star']
+            });
+
+            confetti({
+                ...defaults,
+                particleCount: 10,
+                scalar: 0.75,
+                shapes: ['circle']
+            });
+        }
+
+        setTimeout(shoot, 0);
+        setTimeout(shoot, 100);
+        setTimeout(shoot, 200);
+    }
+
+    function blowout(){
+        var end = Date.now() + (2 * 1000);
+        
+		(function frame() {
+            confetti({
+                particleCount: 2,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0 },
+            });
+            confetti({
+                particleCount: 2,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1 },
+            });
+
+            if (Date.now() < end) {
+                requestAnimationFrame(frame);
+            }
+        }());
+    }
+	if ("{{ len $boxes}}" != "0" && "{{ .percent }}" == "100") {
+        const arr = [star, blowout]
+        arr[(Math.floor(Math.random() * arr.length))]()
+    }
+</script>
 {{ template "error.html" .error }}
 
 {{ template "footer.html" }}

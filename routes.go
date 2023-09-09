@@ -28,6 +28,8 @@ func addPrivateRoutes(g *gin.RouterGroup) {
 	g.GET("/about", viewAbout)
 	g.GET("/logout", logout)
 	g.GET("/dashboard", viewDashboard)
+	g.GET("/settings", viewSettings)
+	g.POST("/settings/edit/:userId", editSettings)
 
 	/* inventory */
 	// boxes
@@ -93,6 +95,24 @@ func viewDashboard (c *gin.Context) {
 		}
 	}
 	c.HTML(http.StatusOK, "dashboard.html", pageData(c, "Dashboard", gin.H{"boxes": boxes, "pwnCount": pwnCount, "percent": (100*float32(pwnCount)/float32(len(boxes))), "usershells": usershells, "rootshells": rootshells}))
+}
+
+func viewSettings (c *gin.Context) {
+	user := getUser(c)
+	c.HTML(http.StatusOK, "settings.html", pageData(c, "Settings", gin.H{"user": user}))
+}
+
+func editSettings (c *gin.Context) {
+	user := getUser(c)
+	user.Color 	= c.PostForm("color")
+	err := dbEditSettings(&user)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": false, "message": errors.Wrap(err, "Error").Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": true, "message":"Saved changes!"})
 }
 
 func viewBoxes (c *gin.Context) {

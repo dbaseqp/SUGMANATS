@@ -11,6 +11,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="/assets/bootstrap5/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="/assets/custom.js"></script>
 </head>
 
@@ -54,7 +55,7 @@
                   <i class="fa-solid fa-user"></i> {{ .user.Name }}
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end">
-                  <li><a class="dropdown-item" href="#"><i class="fa-fw fa-solid fa-user-gear"></i> Settings</a></li>
+                  <li><a class="dropdown-item" href="/settings"><i class="fa-fw fa-solid fa-user-gear"></i> Settings</a></li>
                   <li><a class="dropdown-item" href="/about"><i class="fa-fw fa-solid fa-circle-info"></i> About</a></li>
                   <li><hr class="dropdown-divider"></li>
                   <li><a class="dropdown-item" href="/logout"><i class="fa-fw fa-solid fa-door-open"></i> Logout</a></li>
