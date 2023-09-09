@@ -24,14 +24,24 @@ func addPublicRoutes(g *gin.RouterGroup) {
 }
 
 func addPrivateRoutes(g *gin.RouterGroup) {
+	// generic
 	g.GET("/about", viewAbout)
 	g.GET("/logout", logout)
 	g.GET("/dashboard", viewDashboard)
+
+	/* inventory */
+	// boxes
 	g.GET("/boxes", viewBoxes)
 	g.GET("/boxes/export", viewExportBoxes)
 	g.POST("/boxes/upload", uploadNmap)
 	g.POST("/boxes/edit/details/:boxId", editBoxDetails)
 	g.POST("/boxes/edit/note/:boxId", editBoxNote)
+
+	// credentials
+	g.GET("/credentials", viewCredentials)
+	g.POST("/credentials/add", addCredential)
+	g.POST("/credentials/edit/:credentialId", editCredential)
+	g.POST("/credentials/delete/:credentialId", deleteCredential)
 }
 
 func pageData(c *gin.Context, title string, ginMap gin.H) gin.H {
@@ -68,7 +78,8 @@ func viewLogin (c *gin.Context) {
 func viewDashboard (c *gin.Context) {
 	boxes, err := dbGetBoxes()
 	if err != nil {
-		c.HTML(http.StatusOK, "dashboard.html", pageData(c, "Export Boxes", gin.H{"error": err}))
+		c.HTML(http.StatusInternalServerError, "dashboard.html", pageData(c, "Export Boxes", gin.H{"error": err}))
+		return
 	}
 
 	pwnCount 	:= 0
@@ -87,15 +98,18 @@ func viewDashboard (c *gin.Context) {
 func viewBoxes (c *gin.Context) {
 	boxes, err := dbGetBoxes()
 	if err != nil {
-		c.HTML(http.StatusOK, "export-boxes.html", pageData(c, "Export Boxes", gin.H{"error": err}))
+		c.HTML(http.StatusInternalServerError, "export-boxes.html", pageData(c, "Export Boxes", gin.H{"error": err}))
+		return
 	}
 	ports, err := dbGetPorts()
 	if err != nil {
-		c.HTML(http.StatusOK, "export-boxes.html", pageData(c, "Export Boxes", gin.H{"error": err}))
+		c.HTML(http.StatusInternalServerError, "export-boxes.html", pageData(c, "Export Boxes", gin.H{"error": err}))
+		return
 	}
 	users, err := dbGetUsers()
 	if err != nil {
-		c.HTML(http.StatusOK, "export-boxes.html", pageData(c, "Export Boxes", gin.H{"error": err}))
+		c.HTML(http.StatusInternalServerError, "export-boxes.html", pageData(c, "Export Boxes", gin.H{"error": err}))
+		return
 	}
 	c.HTML(http.StatusOK, "boxes.html", pageData(c, "Boxes", gin.H{"boxes": boxes, "ports": ports, "users": users}))
 }
@@ -103,15 +117,18 @@ func viewBoxes (c *gin.Context) {
 func viewExportBoxes (c *gin.Context) {
 	boxes, err := dbGetBoxes()
 	if err != nil {
-		c.HTML(http.StatusOK, "export-boxes.html", pageData(c, "Export Boxes", gin.H{"error": err}))
+		c.HTML(http.StatusInternalServerError, "export-boxes.html", pageData(c, "Export Boxes", gin.H{"error": err}))
+		return
 	}
 	ports, err := dbGetPorts()
 	if err != nil {
-		c.HTML(http.StatusOK, "export-boxes.html", pageData(c, "Export Boxes", gin.H{"error": err}))
+		c.HTML(http.StatusInternalServerError, "export-boxes.html", pageData(c, "Export Boxes", gin.H{"error": err}))
+		return
 	}
 	users, err := dbGetUsers()
 	if err != nil {
-		c.HTML(http.StatusOK, "export-boxes.html", pageData(c, "Export Boxes", gin.H{"error": err}))
+		c.HTML(http.StatusInternalServerError, "export-boxes.html", pageData(c, "Export Boxes", gin.H{"error": err}))
+		return
 	}
 	c.HTML(http.StatusOK, "export-boxes.html", pageData(c, "Export Boxes", gin.H{"boxes": boxes, "ports": ports, "users": users}))
 }
@@ -230,4 +247,82 @@ func editBoxNote (c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"status": true, "message":"Updated box note successfully!"})
+}
+
+func viewCredentials (c *gin.Context) {
+	boxes, err := dbGetBoxes()
+	if err != nil {
+		c.HTML(http.StatusInternalServerError, "export-boxes.html", pageData(c, "Export Boxes", gin.H{"error": err}))
+		return
+	}
+	ports, err := dbGetPorts()
+	if err != nil {
+		c.HTML(http.StatusInternalServerError, "export-boxes.html", pageData(c, "Export Boxes", gin.H{"error": err}))
+		return
+	}
+	credentials, err := dbGetCredentials()
+	if err != nil {
+		c.HTML(http.StatusInternalServerError, "credentials.html", pageData(c, "Credentials", gin.H{"error": err}))
+		return
+	}
+	c.HTML(http.StatusOK, "credentials.html", pageData(c, "Credentials", gin.H{"boxes": boxes, "ports": ports, "credentials": credentials}))
+}
+
+func addCredential (c *gin.Context) {
+	username 		:= c.PostForm("username")
+	password 		:= c.PostForm("password")
+	note	 		:= c.PostForm("note")
+
+	newCredential := models.Credential{
+		Username:	username,
+		Password:	password,
+		Note: 		note,
+	}
+
+	err := dbAddCredential(&newCredential)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": false, "message": errors.Wrap(err, "Error").Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": true, "message":"Added credential successfully!"})
+}
+
+func editCredential (c *gin.Context) {
+	credentialId, err		:= strconv.ParseUint(c.Param("credentialId"), 10, 32)
+	username 				:= c.PostForm("username")
+	password 				:= c.PostForm("password")
+	note	 				:= c.PostForm("note")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": false, "message": errors.Wrap(err, "Error").Error()})
+		return
+	}
+
+	updatedCredential := models.Credential{
+		ID:			uint(credentialId),
+		Username:	username,
+		Password:	password,
+		Note: 		note,
+	}
+
+	err = dbEditCredential(&updatedCredential)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": false, "message": errors.Wrap(err, "Error").Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": true, "message":"Edited credential successfully!"})
+}
+
+func deleteCredential (c *gin.Context) {
+	credentialId, err		:= strconv.ParseUint(c.Param("credentialId"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": false, "message": errors.Wrap(err, "Error").Error()})
+		return
+	}
+
+	err = dbDeleteCredential(uint(credentialId))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": false, "message": errors.Wrap(err, "Error").Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": true, "message":"Deleted credential successfully!"})
 }

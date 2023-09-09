@@ -54,7 +54,49 @@ func dbGetUsers () (map[uint]models.UserData, error) {
 	return userMap, nil
 }
 
-func dbAddUsers (users []models.UserData) error {
+func dbGetCredentials() ([]models.Credential, error) {
+	var credentials []models.Credential
+	
+	result := db.Table("credentials").Find(&credentials)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return credentials, nil
+}
+
+func dbAddCredential(credential *models.Credential) error {
+	result := db.Create(&credential)
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	return nil
+}
+
+func dbEditCredential(credential *models.Credential) error {
+	result := db.Model(credential).Select("username", "password", "note").Updates(&credential)
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	return nil
+}
+
+func dbDeleteCredential(id uint) error {
+	result := db.Delete(&models.Credential{}, id)
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	return nil
+}
+
+func dbAddUsers(users []models.UserData) error {
 	for _, user := range users {
 		if db.Model(&user).Where("name = ?", user.Name).Updates(&user).RowsAffected == 0 {
 			db.Create(&user)

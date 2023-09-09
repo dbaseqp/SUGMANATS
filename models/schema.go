@@ -36,3 +36,10 @@ type Port struct {
 	Version		string
 	Timestamp	time.Time `gorm:"column:timestamp;default:CURRENT_TIMESTAMP"`
 }
+
+type Credential struct {
+	ID			uint
+	Username	string
+	Password	string
+	Note		string
+}

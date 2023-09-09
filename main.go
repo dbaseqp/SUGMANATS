@@ -36,7 +36,7 @@ func main() {
 	if err != nil {
 		log.Fatalln("Failed to connect database!")
 	}
-	db.AutoMigrate(&models.Box{}, &models.Port{}, &models.UserData{})
+	db.AutoMigrate(&models.Box{}, &models.Port{}, &models.UserData{}, &models.Credential{})
 
 	dbAddUsers(tomlConf.Admin)
 
