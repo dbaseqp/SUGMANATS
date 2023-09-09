@@ -178,13 +178,20 @@ func uploadNmap (c *gin.Context) {
 	var nmapXML models.Nmaprun
 	var box models.Box
 	var port models.Port
+	var dataErrors []string
+	var fileErrors int
+	var boxCount int
+	 
 	for _, formFile := range form.Files {
+		errorOnIteration := false
 		openedFile, _ := formFile.Open()
 		file, _ := io.ReadAll(openedFile)
 
 		xml.Unmarshal(file, &nmapXML)
 		log.Println(fmt.Sprintf("Upload %s success!", formFile.Filename))
 		for _, host := range nmapXML.Host {
+			boxCount++
+
 			box = models.Box {
 				Status: host.Status.State,
 			}
@@ -202,6 +209,11 @@ func uploadNmap (c *gin.Context) {
 			if len(hostname) > 2 {
 				box.Hostname = hostname[1:]
 			}
+			box, err = dbPropagateData(&box)
+			if err != nil {  // tbh idk if this even needs error checking, but who knows...
+				dataErrors = append(dataErrors, errors.Wrap(err, "Data propagation error:").Error())
+				errorOnIteration = true
+			}
 			_ = db.Create(&box)
 
 			for _, p := range host.Ports.Port {
@@ -217,8 +229,16 @@ func uploadNmap (c *gin.Context) {
 				db.Create(&port)
 			}
 		}
+		if (errorOnIteration) {
+			fileErrors++
+		}
 	}
-	c.JSON(http.StatusOK, gin.H{"status": true, "message":"Received files successfully!"})
+	if len(dataErrors) != 0 {
+		for err := range dataErrors {
+			c.JSON(http.StatusInternalServerError, gin.H{"status": false, "message": err})
+		}
+	}
+	c.JSON(http.StatusOK, gin.H{"status": true, "message":fmt.Sprintf("Received %d file(s) successfully! Found %d box(es) successfully.", len(form.Files) - fileErrors, boxCount - len(dataErrors))})
 }
 
 func editBoxDetails (c *gin.Context) {

@@ -145,3 +145,21 @@ func dbEditSettings(user *models.UserData) error {
 
 	return nil
 }
+
+func dbPropagateData(box *models.Box) (models.Box, error) {
+	var oldBox models.Box
+	
+	subquery := db.Table("boxes").Select("id,MAX(timestamp)").Group("ip")
+	result := db.Table("boxes").Joins("INNER JOIN (?) as grouped on boxes.id = grouped.id", subquery).Where("boxes.ip = ?", box.IP).First(&oldBox)
+
+	if result.Error != nil {
+		return models.Box{}, result.Error
+	}
+
+	box.ClaimerID = oldBox.ClaimerID
+	box.Rootshells = oldBox.Rootshells
+	box.Usershells = oldBox.Usershells
+	box.Note = oldBox.Note
+
+	return *box, nil
+}
