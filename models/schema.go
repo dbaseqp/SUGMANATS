@@ -12,6 +12,7 @@ type Box struct {
 	Timestamp	time.Time `gorm:"column:timestamp;default:CURRENT_TIMESTAMP"`
 	Usershells	int
 	Rootshells	int
+	Note		string
 	ClaimerID	uint
 	Claimer		UserData
 }

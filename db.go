@@ -72,3 +72,12 @@ func dbUpdateBoxDetails(box *models.Box) error {
 	}
 	return nil
 }
+
+func dbUpdateBoxNote(box *models.Box) error {
+	subquery := db.Model(box).Select("id,MAX(timestamp)").Group("ip")
+	result := db.Model(box).Select("note").Joins("INNER JOIN (?) as grouped on boxes.id = grouped.id", subquery).Updates(box)
+	if result.Error != nil {	
+		return result.Error
+	}
+	return nil
+}

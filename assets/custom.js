@@ -30,3 +30,27 @@ function createToast(message, color, delay) {
         }, delay);
     }
 }
+
+function postBox(e, formid, data, url, success_function) {
+    e.preventDefault();
+    var form_data = new FormData();
+    for ( var key in data ) {
+        form_data.append(key, data[key]);
+    }
+
+    fetch(url, {
+        method: "POST",
+        body: form_data
+    })
+    .then(response => response.json())
+    .then(response => {
+        if (response.status == false) {
+            createToast(response.message, "bg-danger")
+        } else {
+            success_function(response)
+        }
+    })
+    .catch(error => {
+        createToast(error, "bg-danger")
+    })
+}

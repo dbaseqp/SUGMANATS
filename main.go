@@ -6,6 +6,7 @@ import (
 	"log"
 	// "os"	
 	"net/http"
+	"html/template"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -41,10 +42,14 @@ func main() {
 
 	// setup router
 	router := gin.Default()
+	router.SetFuncMap(template.FuncMap{
+        "markdown": models.RenderMarkdown,
+    })
 	router.Static("/assets", "./assets")
 	router.LoadHTMLGlob("templates/*.html")
 	router.MaxMultipartMemory = 8 << 20 // 8Mib
 	initCookies(router)
+
 
 	// setup routes
 	router.NoRoute(func(c *gin.Context) {

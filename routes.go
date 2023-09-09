@@ -30,7 +30,8 @@ func addPrivateRoutes(g *gin.RouterGroup) {
 	g.GET("/boxes", viewBoxes)
 	g.GET("/boxes/export", viewExportBoxes)
 	g.POST("/boxes/upload", uploadNmap)
-	g.POST("/boxes/edit/:boxId", editBoxDetails)
+	g.POST("/boxes/edit/details/:boxId", editBoxDetails)
+	g.POST("/boxes/edit/note/:boxId", editBoxNote)
 }
 
 func pageData(c *gin.Context, title string, ginMap gin.H) gin.H {
@@ -207,4 +208,26 @@ func editBoxDetails (c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"status": true, "message":"Updated box details successfully!"})
+}
+
+func editBoxNote (c *gin.Context) {
+	boxId, err		:= strconv.ParseUint(c.Param("boxId"), 10, 32)
+	note 			:= c.PostForm("note")
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": false, "message": errors.Wrap(err, "Error").Error()})
+		return
+	}
+
+	updatedBox := models.Box{
+		ID: 		uint(boxId),
+		Note: 		note,
+	}
+
+	err = dbUpdateBoxNote(&updatedBox)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": false, "message": errors.Wrap(err, "Error").Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": true, "message":"Updated box note successfully!"})
 }
