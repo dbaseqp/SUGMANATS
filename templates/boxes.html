@@ -75,21 +75,21 @@
                                             <i class="fa-fw fa-regular fa-user"></i>
                                             <div class="ms-4">
                                                 <div class="fs-6">User Shells</div>
-                                                <div id="box-details-usershells-{{ $box.ID }}">{{ $box.Usershells }}</div>
+                                                <div id="box-details-usershells-{{ $box.ID }}" data-ajax="usershells" data-boxId="{{ $box.ID }}">{{ $box.Usershells }}</div>
                                             </div>
                                         </li>
                                         <li class="list-group-item fs-2 d-flex flex-row align-items-center">
                                             <i class="fa-fw fa-solid fa-skull-crossbones"></i>
                                             <div class="ms-4">
                                                 <div class="fs-6">Root Shells</div>
-                                                <div id="box-details-rootshells-{{ $box.ID }}">{{ $box.Rootshells }}</div>
+                                                <div id="box-details-rootshells-{{ $box.ID }}" data-ajax="rootshells" data-boxId="{{ $box.ID }}">{{ $box.Rootshells }}</div>
                                             </div>
                                         </li>
                                         <li class="list-group-item fs-2 d-flex flex-row align-items-center">
                                             <i class="fa-fw fa-solid fa-street-view"></i>
                                             <div class="ms-4">
                                                 <div class="fs-6">Claim</div>
-                                                <div id="box-details-claim-{{ $box.ID }}">{{ if ne $box.ClaimerID 0 }}{{ $claimUser.Name }}{{ else }}Unclaimed{{ end }}</div>
+                                                <div id="box-details-claim-{{ $box.ID }}" data-ajax="claim" data-boxId="{{ $box.ID }}">{{ if ne $box.ClaimerID 0 }}{{ $claimUser.Name }}{{ else }}Unclaimed{{ end }}</div>
                                             </div>
                                         </li>
                                     </ul>
@@ -345,6 +345,56 @@
         }
     })
 
+    const evtSource = new EventSource("/sse");
+    evtSource.onmessage = (event) => {
+        data = JSON.parse(event.data)
+        if (data.includes("dirty")) {
+            createToast("Refresh the window for newer data", "bg-primary")
+        }
+        if (data.includes("boxes")) {
+            fetch("/api/boxes")
+            .then(response => response.json())
+            .then(response => {
+                if (response.status == false) {
+                    createToast(response.message, "bg-danger")
+                } else {
+                    for (const id of response.boxIds) {
+                        document.querySelectorAll('[data-ajax="usershells"]').forEach((element) => {
+                            if (element.getAttribute("data-boxId") == id) {
+                                element.textContent = response.boxes[id].Usershells
+                            }
+                        })
+                        document.querySelectorAll('[data-ajax="rootshells"]').forEach((element) => {
+                            if (element.getAttribute("data-boxId") == id) {
+                                element.textContent = response.boxes[id].Rootshells
+                            }
+                        })
+                        document.querySelectorAll('[data-ajax="claim"]').forEach((element) => {
+                            if (element.getAttribute("data-boxId") == id) {
+                                if (response.boxes[id].ClaimerID == 0) {
+                                    element.textContent = "Unclaimed"
+                                } else {
+                                    element.textContent = response.users[response.boxes[id].ClaimerID].Name
+                                }
+                            }
+                        })
+                        document.querySelectorAll('[data-ajax="note"]').forEach((element) => {
+                            if (element.getAttribute("data-boxId") == id) {
+                                element.textContent = response.boxes[id].Note
+                            }
+                        })
+                    }
+                }
+            })
+            .catch(error => {
+                createToast(error, "bg-danger")
+            })
+        }
+        if (data.includes("ports")){
+            console.log("ports")
+        }
+    };
+
     function editBoxNote(e, id) {
         formid = "box-note-edit-form-"+id;
         url = "/boxes/edit/note/"+id;
@@ -380,9 +430,6 @@
 
             createToast(response.message, "bg-success")
             modal.hide()
-            document.getElementById('box-details-usershells-'+id).textContent = form.usershells.value
-            document.getElementById('box-details-rootshells-'+id).textContent = form.rootshells.value
-            document.getElementById('box-details-claim-'+id).textContent = form.claim.options[form.claim.options.selectedIndex].textContent
         }
 
         postAjax(e, formid, data, url, success_function)

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"encoding/xml"
+	"encoding/json"
 	"strconv"
 
 	"github.com/pkg/errors"
@@ -30,7 +31,8 @@ func addPrivateRoutes(g *gin.RouterGroup) {
 	g.GET("/dashboard", viewDashboard)
 	g.GET("/settings", viewSettings)
 	g.POST("/settings/edit/:userId", editSettings)
-
+	g.GET("/sse", stream.serveHTTP(), sse)
+	
 	/* inventory */
 	// boxes
 	g.GET("/boxes", viewBoxes)
@@ -38,6 +40,7 @@ func addPrivateRoutes(g *gin.RouterGroup) {
 	g.POST("/boxes/upload", uploadNmap)
 	g.POST("/boxes/edit/details/:boxId", editBoxDetails)
 	g.POST("/boxes/edit/note/:boxId", editBoxNote)
+	g.GET("/api/boxes", getBoxes)
 
 	// credentials
 	g.GET("/credentials", viewCredentials)
@@ -238,6 +241,7 @@ func uploadNmap (c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"status": false, "message": err})
 		}
 	}
+	sendSSE([]string{"boxes","ports","dirty"})
 	c.JSON(http.StatusOK, gin.H{"status": true, "message":fmt.Sprintf("Received %d file(s) successfully! Found %d box(es) successfully.", len(form.Files) - fileErrors, boxCount - len(dataErrors))})
 }
 
@@ -264,6 +268,7 @@ func editBoxDetails (c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": false, "message": errors.Wrap(err, "Error").Error()})
 		return
 	}
+	sendSSE([]string{"boxes"})
 	c.JSON(http.StatusOK, gin.H{"status": true, "message":"Updated box details successfully!"})
 }
 
@@ -365,4 +370,63 @@ func deleteCredential (c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"status": true, "message":"Deleted credential successfully!"})
+}
+
+func sse (c *gin.Context) {
+	c.Header("Content-Type", "text/event-stream")
+	c.Header("Cache-Control", "no-cache")
+	c.Header("Connection", "keep-alive")
+	c.Header("Access-Control-Allow-Origin", "*")
+	c.Header("Transfer-Encoding", "chunked")
+
+	// Continuously send messages to the client
+	v, ok := c.Get("clientChan")
+	if !ok {
+		return
+	}
+	clientChan, ok := v.(ClientChan)
+	if !ok {
+		return
+	}
+	c.Stream(func(w io.Writer) bool {
+		// Stream message to client from message channel
+		if msg, ok := <-clientChan; ok {
+			c.SSEvent("message", msg)
+			return true
+		}
+		return false
+	})
+}
+
+func sendSSE(models []string) {
+	if stream != nil {
+		jsonString, err := json.Marshal(models)
+		if err != nil {
+			log.Printf("%s: %+v", errors.Wrap(err, "SSE json error").Error(), models)
+			return
+		}
+		// send the message through the available channel
+		stream.Message <- string(jsonString)
+	}
+}
+
+func getBoxes(c *gin.Context) {
+	boxes, err := dbGetBoxes()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": false, "message": errors.Wrap(err, "AJAX").Error()})
+		return
+	}
+	users, err := dbGetUsers()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": false, "message": errors.Wrap(err, "AJAX").Error()})
+		return
+	}
+	var boxIds []int
+	jsonBoxes := map[int]models.Box{}
+	for _, box := range boxes {
+		boxIds = append(boxIds, int(box.ID))
+		jsonBoxes[int(box.ID)] = box
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": true, "boxIds": boxIds, "boxes": jsonBoxes, "users": users})
 }

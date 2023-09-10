@@ -15,6 +15,7 @@ function createToast(message, color, delay) {
     `;
 
     // Add the toast to the container
+    toast.setAttribute("data-bs-autohide", false)
     toastContainer.appendChild(toast);
 
     // Initialize the Bootstrap toast
@@ -28,7 +29,7 @@ function createToast(message, color, delay) {
         setTimeout(() => {
         bootstrapToast.hide();
         }, delay);
-    }
+    } 
 }
 
 function postAjax(e, formid, data, url, success_function) {
