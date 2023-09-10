@@ -9,9 +9,9 @@
 
 <div class="mt-4 container">
     <div class="row">
-        <div class="hstack gap-2 w-auto mb-4" id="box-tabs">
+        <ul class="nav nav-tabs mb-4" role="tablist" id="tab-list">
             
-        </div>
+        </ul>
     </div>
     <div class="row">
         <div class="tab-content" id="v-pills-tabContent">
@@ -231,7 +231,7 @@
     <h5 class="mb-4">Boxes</h5>
     <div class="list-group list-group-flush" id="box-bar">
         {{ range $box := $boxes }}
-        <button class="list-group-item list-group-item-action" id="v-pills-{{ $box.ID }}-tab" data-claim="{{ if ne $box.ClaimerID 0}}{{ $claimer := index $users $box.ClaimerID }}{{ $claimer.Name }}{{ else }}unclaimed{{ end }}" data-pwned="{{ or (gt $box.Usershells 0 ) (gt $box.Rootshells 0 ) }}" data-bs-toggle="pill" data-bs-target="#v-pills-{{ $box.ID }}" type="button" role="tab" aria-controls="v-pills-{{ $box.ID }}" aria-selected="true">
+        <button class="list-group-item list-group-item-action" id="v-pills-{{ $box.ID }}-tab" data-claim="{{ if ne $box.ClaimerID 0}}{{ $claimer := index $users $box.ClaimerID }}{{ $claimer.Name }}{{ else }}unclaimed{{ end }}" data-pwned="{{ or (gt $box.Usershells 0 ) (gt $box.Rootshells 0 ) }}" data-bs-toggle="pill" data-bs-target="#v-pills-{{ $box.ID }}" data-box-tab="box-tab-{{ $box.ID }}" type="button" role="tab" aria-controls="v-pills-{{ $box.ID }}" aria-selected="true">
             {{ $box.IP }}{{ if $box.Hostname }} <hr class="vr mx-2 my-0"> {{ $box.Hostname}}{{ end }}
         </button>
         {{ end }}
@@ -336,14 +336,89 @@
     })
 
     const boxBar  = document.getElementById('box-bar');
+    const tabList  = document.getElementById('tab-list');
     const defaultPane  = document.getElementById('v-pills-default');
-
+    // get rid of "no box selected pane"
 
     boxBar.addEventListener('click', (event) => {
         if(event.target && event.target.matches(".list-group-item-action")) {
-            defaultPane.style.display = "none";
+            defaultPane.classList.remove("active");
         }
     })
+
+    function createBoxTab(id) {
+        box = document.querySelector(`[data-box-tab="${id}"]`)
+        li = document.createElement("li")
+        li.classList.add("nav-item")
+        li.id = id+"-parent"
+
+        closeButton = document.createElement("button")
+        closeButton.type = "button"
+        closeButton.classList.add("btn-close")
+        closeButton.setAttribute("aria-label", "Close")
+        closeButton.setAttribute("data-close", li.id)
+        closeButton.addEventListener('click', (event) => {
+            document.getElementById(event.target.getAttribute("data-close")).remove()
+            document.getElementById(box.getAttribute("data-bs-target").replace("#","")).classList.remove("active")
+            if (window.location.hash.includes(","))
+            {
+                boxList = window.location.hash.split(",").filter(element => element != event.target.getAttribute("data-close").replace("-parent",""))
+                window.location.hash = boxList.join(",")
+            } else {
+                window.location.hash = ""
+            }
+            if (!hash) {
+                defaultPane.classList.add("active")
+            } 
+        })
+        
+        newTab = document.createElement("button")
+        newTab.id = id
+        newTab.classList.add("nav-link")
+        newTab.setAttribute("data-bs-target", box.getAttribute("data-bs-target"))
+        newTab.setAttribute("data-bs-toggle", "pill")
+        newTab.type = "button"
+        newTab.role = "tab"
+        newTab.setAttribute("aria-controls", box.getAttribute("aria-controls"))
+        newTab.textContent = box.textContent
+
+        newTab.appendChild(closeButton)
+        li.appendChild(newTab)
+        tabList.appendChild(li)
+        return new bootstrap.Tab(newTab)
+    }
+
+    // probably need to clean this up
+    boxes.forEach((box) => {
+        box.addEventListener('click', (event) => {
+            id = box.getAttribute("data-box-tab")
+            if (document.getElementById(id) != null) {
+                return
+            }
+            var hash = location.hash.replace(/^#/, ''); 
+            if (hash) {
+                if (!hash.split(",").includes(id)) {
+                    window.location.hash += ","+id;
+                } 
+            } else {
+                window.location.hash += id;
+            }
+                
+            createBoxTab(id)
+        })
+    })
+
+    // Javascript to enable link to tab (save state)
+    var hash = location.hash.replace(/^#/, ''); 
+    if (hash) {
+        defaultPane.classList.remove("active");
+        for (const id of hash.split(",")) {
+            tab = createBoxTab(id)
+            tab.show()
+        }
+    } 
+
+    // sse and ajax
 
     const evtSource = new EventSource("/sse");
     evtSource.onmessage = (event) => {
