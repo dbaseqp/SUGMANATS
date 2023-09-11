@@ -10,6 +10,7 @@ import (
 	"encoding/xml"
 	"encoding/json"
 	"strconv"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/BurntSushi/toml"
@@ -47,6 +48,12 @@ func addPrivateRoutes(g *gin.RouterGroup) {
 	g.POST("/credentials/add", addCredential)
 	g.POST("/credentials/edit/:credentialId", editCredential)
 	g.POST("/credentials/delete/:credentialId", deleteCredential)
+
+	/* tasks */
+	g.GET("/tasks", viewTasks)
+	g.POST("/tasks/add", addTask)
+	g.POST("/tasks/edit/:taskId", editTask)
+	g.POST("/tasks/delete/:taskId", deleteTask)
 }
 
 func pageData(c *gin.Context, title string, ginMap gin.H) gin.H {
@@ -429,4 +436,90 @@ func getBoxes(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"status": true, "boxIds": boxIds, "boxes": jsonBoxes, "users": users})
+}
+
+func viewTasks (c *gin.Context) {
+	users, err := dbGetUsers()
+	if err != nil {
+		c.HTML(http.StatusInternalServerError, "tasks.html", pageData(c, "Tasks", gin.H{"error": err}))
+		return
+	}
+	tasks, err := dbGetTasks()
+	if err != nil {
+		c.HTML(http.StatusInternalServerError, "tasks.html", pageData(c, "Tasks", gin.H{"error": err}))
+		return
+	}
+	c.HTML(http.StatusOK, "tasks.html", pageData(c, "Tasks", gin.H{"users": users, "tasks": tasks}))
+}
+
+type TaskForm struct {
+    Assignee 	*int `form:"assignee" binding:"required"`
+	Note		string `form:"note" binding:"required"`
+	Status		string `form:"status" binding:"required"`
+	DueTime		time.Time `form:"due-time"`
+}
+
+func addTask (c *gin.Context) {
+	var form TaskForm
+	err := c.ShouldBind(&form)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": false, "message": errors.Wrap(err, "Error").Error()})
+		return
+	}
+
+	newTask := models.Task{
+		AssigneeID: uint(*form.Assignee),
+		Status:		form.Status,
+		Note: 		form.Note,
+	}
+	if !form.DueTime.IsZero() {
+		newTask.DueTime = form.DueTime
+	}
+
+	err = dbAddTask(&newTask)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": false, "message": errors.Wrap(err, "Error").Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": true, "message":"Added task successfully!"})
+}
+
+func editTask (c *gin.Context) {
+	var form TaskForm
+	err := c.ShouldBind(&form)
+	taskId, err	:= strconv.ParseUint(c.Param("taskId"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": false, "message": errors.Wrap(err, "Error").Error()})
+		return
+	}
+
+	newTask := models.Task{
+		ID:			uint(taskId),
+		DueTime:	form.DueTime,
+		Status:		form.Status,
+		Note: 		form.Note,
+		AssigneeID:	uint(*form.Assignee),
+	}
+
+	err = dbEditTask(&newTask)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": false, "message": errors.Wrap(err, "Error").Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": true, "message":"Edited task successfully!"})
+}
+
+func deleteTask (c *gin.Context) {
+	taskId, err		:= strconv.ParseUint(c.Param("taskId"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": false, "message": errors.Wrap(err, "Error").Error()})
+		return
+	}
+
+	err = dbDeleteTask(uint(taskId))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": false, "message": errors.Wrap(err, "Error").Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": true, "message":"Deleted task successfully!"})
 }

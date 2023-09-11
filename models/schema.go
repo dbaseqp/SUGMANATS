@@ -22,6 +22,7 @@ type UserData struct {
 	Name		string
 	Pw			string
 	Color		string
+	Tasks		[]Task `gorm:"foreignKey:AssigneeID"`
 }
 
 type Port struct {
@@ -42,4 +43,13 @@ type Credential struct {
 	Username	string
 	Password	string
 	Note		string
+}
+
+type Task struct {
+	ID			uint
+	Note		string
+	Status		string
+	DueTime		time.Time
+	AssigneeID	uint
+	Assignee	UserData
 }

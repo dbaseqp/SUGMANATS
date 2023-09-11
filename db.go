@@ -149,6 +149,11 @@ func dbEditSettings(user *models.UserData) error {
 func dbPropagateData(box *models.Box) (models.Box, error) {
 	var oldBox models.Box
 	
+	// empty
+	if err := db.Model(box).First(&models.UserData{}).Error; err != nil {
+		return *box, nil
+	}
+
 	subquery := db.Table("boxes").Select("id,MAX(timestamp)").Group("ip")
 	result := db.Table("boxes").Joins("INNER JOIN (?) as grouped on boxes.id = grouped.id", subquery).Where("boxes.ip = ?", box.IP).First(&oldBox)
 
@@ -162,4 +167,58 @@ func dbPropagateData(box *models.Box) (models.Box, error) {
 	box.Note = oldBox.Note
 
 	return *box, nil
+}
+
+func dbGetTasks () ([]models.Task, error) {
+	var tasks []models.Task
+	
+	result := db.Preload("Assignee").Find(&tasks)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return tasks, nil
+}
+
+func dbGetMyTasks (id uint) ([]models.Task, error) {
+	var tasks []models.Task
+	
+	result := db.Preload("tasks").Find(&tasks)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return tasks, nil
+}
+
+func dbAddTask (task *models.Task) error {
+	result := db.Create(&task)
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	return nil
+}
+
+func dbEditTask(task *models.Task) error {
+	result := db.Model(task).Select("note", "due_time", "status", "assignee_id").Updates(&task)
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	return nil
+}
+
+func dbDeleteTask(id uint) error {
+	result := db.Delete(&models.Task{}, id)
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	return nil
 }

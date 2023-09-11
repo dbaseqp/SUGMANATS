@@ -1,0 +1,236 @@
+{{ template "header.html" . }}
+
+{{ $tasks := .tasks }}
+{{ $users := .users }}
+{{ $config := .config }}
+
+<div class="mt-4 container">
+    <div class="row mb-3">
+        <div class="col">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+                Add Task
+            </button>
+        </div>
+    </div>
+    <div class="row">
+        {{ range $task := $tasks }}
+        <div class="col col-sm-6 col-lg-4">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <div class="d-flex">
+                        <div>
+                            Status: {{ $task.Status }}
+                        </div>
+                        <div class="ms-auto">
+                            <a type="button" class="btn btn-link w-auto link-underline link-underline-opacity-0 link-underline-opacity-100-hover" data-bs-toggle="modal" data-bs-target="#task-edit-modal-{{ $task.ID }}">
+                                Edit...
+                            </a>
+                        </div>
+                    </div>
+                    <div class="w-auto" style="height: 20px; background-color: {{ $task.Assignee.Color }}"></div>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <tr>
+                            <th>Assigned To</th>
+                            <th>Due Time</th>
+                        </tr>
+                        <tr>
+                            <td>
+                                {{ if eq $task.AssigneeID 0}}Everyone{{ else }}{{ $task.Assignee.Name }}{{ end }}
+                            </td>
+                            <td>
+                                {{ $task.DueTime }}
+                            </td>
+                        </tr>
+                    </table>
+                    <p class="card-text">{{ $task.Note | markdown }}</p>
+                </div>
+            </div>
+            <div class="modal fade" id="task-edit-modal-{{ $task.ID }}" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="editTaskLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="editTaskLabel">Edit Task</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="task-edit-form-{{ $task.ID }}" method="POST" onsubmit="editTask(event, '{{ $task.ID }}')">
+                                <div class="row">
+                                    <div class="col">
+                                        <div class="input-group mb-3">
+                                            <span class="input-group-text" id="edit-task-status-editon">Status</span>
+                                            <input type="text" name="status" class="form-control" placeholder="Status" aria-label="Status" aria-describedby="edit-task-status-editon" value="{{ $task.Status }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="input-group mb-3">
+                                            <span class="input-group-text" id="edit-task-due-editon">Due Time</span>
+                                            <input type="datetime-local" name="due-time" class="form-control" aria-label="Due Time" aria-describedby="edit-task-due-editon" value="{{ $task.DueTime }}">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="input-group mb-3">
+                                    <span class="input-group-text" id="edit-task-assignee-editon">Assign To</span>
+                                    <select name="assignee" class="form-select" size="3" aria-label="Assign To" required>
+                                        <option value="0" {{ if eq $task.ID 0 }}selected{{ end }}>Everyone</option>
+                                        {{ range $user := $users }}
+                                        <option value="{{ $user.ID }}" {{ if eq $task.AssigneeID $user.ID }}selected{{ end }}>{{ $user.Name }}</option>
+                                        {{ end }}
+                                    </select>
+                                </div>
+                                <div class="input-group mb-3">
+                                    <span class="input-group-text" id="edit-task-note-editon">Note</span>
+                                    <textarea rows="10" name="note" class="form-control" placeholder="Write task description here (supports markdown)" aria-label="Note" aria-describedby="edit-task-note-editon">{{ $task.Note }}</textarea>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#task-delete-modal-{{ $task.ID }}">Delete Task</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary" form="task-edit-form-{{ $task.ID }}">Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div> 
+            <div class="modal fade" id="task-delete-modal-{{ $task.ID }}" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="deletetaskLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="deletetaskLabel">Delete tasks</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="task-delete-form-{{ $task.ID }}" method="POST" onsubmit="deleteTask(event, '{{ $task.ID }}')">
+                                Are you sure you want to delete this task?
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-danger" form="task-delete-form-{{ $task.ID }}">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            </div> 
+        </div>
+        {{ end }}
+    </div>
+</div> 
+
+<div class="modal fade" id="addTaskModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="addTaskLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="addTaskLabel">Add Task</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="task-add-form" method="POST" onsubmit="addTask(event)">
+                    <div class="row">
+                        <div class="col">
+                            <div class="input-group mb-3">
+                                <span class="input-group-text" id="add-task-status-addon">Status</span>
+                                <input type="text" name="status" class="form-control" placeholder="Status" aria-label="Status" aria-describedby="add-task-status-addon">
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="input-group mb-3">
+                                <span class="input-group-text" id="add-task-due-addon">Due Time</span>
+                                <input type="datetime-local" name="due-time" class="form-control" aria-label="Due Time" aria-describedby="add-task-due-addon">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" id="add-task-assignee-addon">Assign To</span>
+                        <select name="assignee" class="form-select" size="3" aria-label="Assign To">
+                            <option value="0" selected>Everyone</option>
+                            {{ range $user := $users }}
+                            <option value="{{ $user.ID }}">{{ $user.Name }}</option>
+                            {{ end }}
+                        </select>
+                    </div>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" id="add-task-note-addon">Note</span>
+                        <textarea rows="10" name="note" class="form-control" placeholder="Write task description here (supports markdown)" aria-label="Note" aria-describedby="add-task-note-addon"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary" form="task-add-form">Add</button>
+            </div>
+        </div>
+    </div>
+</div> 
+
+<script>
+    function addTask(e) {
+        formid = "task-add-form";
+        url = "/tasks/add";
+
+        const form = document.forms[formid]
+
+        data = {
+            note: form.note.value,
+            status: form.status.value,
+            assignee: form.assignee.value,
+        }
+        if (form["due-time"].value != "") {
+            data["due-time"] = (new Date(form["due-time"].value)).toISOString()
+        }
+        success_function = function (response){
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addTaskModal'))
+
+            createToast(response.message, "bg-success")
+            modal.hide()
+        }
+
+        postAjax(e, formid, data, url, success_function)
+    }
+
+    function editTask(e, id) {
+        formid = "task-edit-form-"+id;
+        url = "/tasks/edit/"+id;
+
+        const form = document.forms[formid]
+
+        data = {
+            note: form.note.value,
+            status: form.status.value,
+            assignee: form.assignee.value,
+        }
+        if (form["due-time"].value != "") {
+            data["due-time"] = (new Date(form["due-time"].value)).toISOString()
+        }
+        success_function = function (response){
+            const modal = bootstrap.Modal.getInstance(document.getElementById('task-edit-modal-'+id))
+
+            createToast(response.message, "bg-success")
+            modal.hide()
+        }
+
+        postAjax(e, formid, data, url, success_function)
+    }
+
+    function deleteTask(e, id) {
+        formid = "task-delete-form-"+id;
+        url = "/tasks/delete/"+id;
+
+        const form = document.forms[formid]
+
+        data = {}
+
+        success_function = function (response){
+            const modal = bootstrap.Modal.getInstance(document.getElementById('task-delete-modal-'+id))
+
+            createToast(response.message, "bg-success")
+            modal.hide()
+        }
+
+        postAjax(e, formid, data, url, success_function)
+    }
+</script>
+
+{{ template "error.html" .error }}
+
+{{ template "footer.html" }}
