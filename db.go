@@ -1,7 +1,7 @@
 package main
 
 import (
-	// "fmt"
+	"fmt"
 
 	// "github.com/gin-gonic/gin"
 	// "gorm.io/gorm/clause"
@@ -146,27 +146,28 @@ func dbEditSettings(user *models.UserData) error {
 	return nil
 }
 
-func dbPropagateData(box *models.Box) (models.Box, error) {
+func dbPropagateData(box models.Box) (models.Box, error) {
 	var oldBox models.Box
 	
-	// empty
-	if err := db.Model(box).First(&models.UserData{}).Error; err != nil {
-		return *box, nil
+	// see if IP exists
+	if err := db.Table("boxes").Where("ip = (?)", box.IP).First(&models.Box{}).Error; err != nil {
+		fmt.Println("no found ip")
+		return box, nil
 	}
 
-	subquery := db.Table("boxes").Select("id,MAX(timestamp)").Group("ip")
-	result := db.Table("boxes").Joins("INNER JOIN (?) as grouped on boxes.id = grouped.id", subquery).Where("boxes.ip = ?", box.IP).First(&oldBox)
+	subquery := db.Table("boxes").Select("id,ip,MAX(timestamp)").Group("ip")
+	result := db.Table("boxes").Joins("INNER JOIN (?) as grouped on boxes.id = grouped.id", subquery).Where("boxes.IP = ?", box.IP).First(&oldBox)
 
 	if result.Error != nil {
 		return models.Box{}, result.Error
 	}
-
+	// these shouldn't change when merging scans
 	box.ClaimerID = oldBox.ClaimerID
 	box.Rootshells = oldBox.Rootshells
 	box.Usershells = oldBox.Usershells
 	box.Note = oldBox.Note
 
-	return *box, nil
+	return box, nil
 }
 
 func dbGetTasks () ([]models.Task, error) {

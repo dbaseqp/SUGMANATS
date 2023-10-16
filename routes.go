@@ -219,7 +219,7 @@ func uploadNmap (c *gin.Context) {
 			if len(hostname) > 2 {
 				box.Hostname = hostname[1:]
 			}
-			box, err = dbPropagateData(&box)
+			box, err = dbPropagateData(box)
 			if err != nil {  // tbh idk if this even needs error checking, but who knows...
 				dataErrors = append(dataErrors, errors.Wrap(err, "Data propagation error:").Error())
 				errorOnIteration = true
