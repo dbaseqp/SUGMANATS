@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	// "fmt"
 
 	// "github.com/gin-gonic/gin"
 	// "gorm.io/gorm/clause"
@@ -151,7 +151,6 @@ func dbPropagateData(box models.Box) (models.Box, error) {
 	
 	// see if IP exists
 	if err := db.Table("boxes").Where("ip = (?)", box.IP).First(&models.Box{}).Error; err != nil {
-		fmt.Println("no found ip")
 		return box, nil
 	}
 
